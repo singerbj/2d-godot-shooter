@@ -1,0 +1,3 @@
+res://default_env.tres
+res://src/scenes/World.tscn
+res://src/scripts/Player.gd

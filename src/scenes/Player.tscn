@@ -1,0 +1,50 @@
+[gd_scene load_steps=7 format=3 uid="uid://xf1vceob0nyl"]
+
+[ext_resource type="Script" path="res://src/scripts/OLD3D_Player.gd" id="1_c2vss"]
+[ext_resource type="Texture2D" uid="uid://i304cp62jthg" path="res://images/bar.png" id="2"]
+
+[sub_resource type="CapsuleMesh" id="6"]
+
+[sub_resource type="CapsuleShape3D" id="7"]
+
+[sub_resource type="SphereMesh" id="10"]
+radius = 0.75
+
+[sub_resource type="ViewportTexture" id="11"]
+viewport_path = NodePath("HealthBar/SubViewport")
+
+[node name="CharacterBody3D" type="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
+script = ExtResource("1_c2vss")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("6")
+skeleton = NodePath("")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+shape = SubResource("7")
+
+[node name="MeshInstance2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.986188, -0.321504)
+mesh = SubResource("10")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.37757, 2.13163e-13)
+
+[node name="HealthBar" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9204, 0)
+billboard = 1
+texture = SubResource("11")
+
+[node name="SubViewport" type="SubViewport" parent="HealthBar"]
+transparent_bg = true
+size = Vector2i(200, 26)
+
+[node name="TextureProgressBar" type="TextureProgressBar" parent="HealthBar/SubViewport"]
+offset_right = 200.0
+offset_bottom = 40.0
+value = 100.0
+texture_progress = ExtResource("2")
+tint_under = Color(0.87451, 0.0588235, 0.0588235, 1)

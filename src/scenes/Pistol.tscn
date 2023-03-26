@@ -1,0 +1,15 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://src/materials/orange.tres" type="Material" id=1]
+[ext_resource path="res://src/scripts/weapons/Pistol.gd" type="Script" id=2]
+
+[sub_resource type="BoxMesh" id=1]
+size = Vector3( 0.1, 0.1, 1 )
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource( 2 )
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D( 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 0.5, 0, -0.118684, -0.262093 )
+mesh = SubResource( 1 )
+material/0 = ExtResource( 1 )
