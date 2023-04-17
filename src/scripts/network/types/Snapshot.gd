@@ -3,11 +3,11 @@ extends Node
 class_name Snapshot
 
 var id : String
-var time : int
+var time : float
 var state : Dictionary = {}
 var last_processed_input_ids : Dictionary
 
-func _init(_id : String = "",_time : int = -1,_state : Dictionary = {},_last_processed_input_ids : Dictionary = {}):
+func _init(_id : String = "", _time : float = -1.0, _state : Dictionary = {}, _last_processed_input_ids : Dictionary = {}):
 	self.id = _id
 	self.time = _time
 	self.state = _state

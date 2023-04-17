@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://ld37t5f255wn"]
+
+[ext_resource type="Script" path="res://src/scripts/weapons/AssaultRifle.gd" id="1_8g0mc"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_8g0mc")
+
+[node name="Polygon2D" type="Polygon2D" parent="."]
+position = Vector2(4.47863, -0.897436)
+scale = Vector2(0.316239, 0.316239)
+color = Color(0.054902, 0.054902, 0.054902, 1)
+polygon = PackedVector2Array(1, 14, -11, 72, 88, 41, 76, 93, 97, 93, 105, 41, 125, 39, 162, 39, 163, 45, 175, 73, 190, 94, 206, 106, 226, 115, 245, 123, 263, 105, 251, 101, 236, 89, 218, 77, 201, 60, 198, 39, 284, 40, 297, 35, 326.863, 35, 339, 39, 338, 18, 326.878, 22.3065, 297, 22, 281, 7, 91, 6)

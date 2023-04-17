@@ -3,6 +3,7 @@ extends Node
 class_name NetworkManager
 
 var _network : ENetMultiplayerPeer = ENetMultiplayerPeer.new()
+var _gateway := SceneMultiplayer.new()
 var _is_server : bool = false
 var _is_client : bool = false
 var _client_connected : bool = false
@@ -83,13 +84,13 @@ func connect_to_server(ip_address : String):
 	
 func _connect_to_server(ip_address):
 	print("Client attempting connection to server at: %s:%s" % [ip_address, _network_config.DEFAULT_SERVER_PORT])
-	
-	get_tree().connect("connection_failed",Callable(self,"_on_connection_failed_internal"))
-	get_tree().connect("connected_to_server",Callable(self,"_on_connection_succeeded_internal"))
+#
+	multiplayer.connect("connection_failed", Callable(self, "_on_connection_failed_internal"))
+	multiplayer.connect("connected_to_server", Callable(self, "_on_connection_succeeded_internal"))
 	
 	var create_client_result = _network.create_client(ip_address, _network_config.DEFAULT_SERVER_PORT, 0, 0)
 	if create_client_result == OK:
-		get_tree().set_multiplayer_peer(_network)
+		multiplayer.set_multiplayer_peer(_network)
 	else:
 		_on_connection_failed_internal()
 	
@@ -119,17 +120,20 @@ func _report_input(input : NetworkInput) -> void:
 #func _on_reported_input_processed(input_array): # TODO: dont keep sending the client input if it has already been processed
 #	pass
 		
-@rpc("any_peer") func _on_snapshot_recieved_internal(_serialized_snapshot : Dictionary):
+@rpc("authority") 
+func _on_snapshot_recieved_internal(_serialized_snapshot : Dictionary):
 	# TODO: deserialize the snapshot properly here once we are serializing
 	var snapshot : Snapshot = Snapshot.new().deserialize(_entity_classes, _serialized_snapshot)
 	server_snapshot_manager.add_snapshot(snapshot)
 	call("_on_snapshot_recieved", snapshot)
 
-@rpc("any_peer") func _on_confirm_connection_internal(peer_id : int):
+@rpc("authority") 
+func _on_confirm_connection_internal(peer_id : int):
 	_local_peer_id = peer_id
 	call("_on_confirm_connection", peer_id)
 
-@rpc("any_peer") func _on_peer_disconnect_reported_internal(peer_id : int):
+@rpc("authority") 
+func _on_peer_disconnect_reported_internal(peer_id : int):
 	call("_on_peer_disconnect_reported", peer_id)
 
 func _send_message(msg: String) -> void:
@@ -138,7 +142,8 @@ func _send_message(msg: String) -> void:
 	else:
 		rpc_id(0, "_on_message_received_from_client_internal", msg)
 
-@rpc("any_peer") func _on_message_received_from_server_internal(sender : int, message : String, chat_mode : String, message_color : String, sender_color : String) -> void:
+@rpc("authority") 
+func _on_message_received_from_server_internal(sender : int, message : String, chat_mode : String, message_color : String, sender_color : String) -> void:
 	print("======> [%s]: " % sender, message)
 
 
@@ -167,6 +172,8 @@ func start_server():
 func _create_server(server_port : int, max_connections : int):
 	var create_server_result = _network.create_server(server_port, max_connections)
 	if create_server_result == OK:
+#		get_tree().set_multiplayer(_gateway, get_tree()) # TODO: why was this added? It works without it, otherwise i get the mismatch rpc error
+		
 		var args = Array(OS.get_cmdline_args()) #TODO: abstract this into a commandline manager
 		for arg in args:
 			var formatted_arg_array = arg.split("=")
@@ -176,12 +183,12 @@ func _create_server(server_port : int, max_connections : int):
 				_network.set_bind_ip(bind_ip)
 				print("Using command line specified bind ip: " + bind_ip)
 			
-		get_tree().set_multiplayer_peer(_network)
+		multiplayer.set_multiplayer_peer(_network)
 		print("Server started (Running at %s ticks per second on port %s)" % [Engine.physics_ticks_per_second, server_port])
 		_server_connected = true
 		
-		_network.connect("peer_connected",Callable(self,"_on_peer_connected_internal"))
-		_network.connect("peer_disconnected",Callable(self,"_on_peer_disconnected_internal"))
+		multiplayer.connect("peer_connected",Callable(self, "_on_peer_connected_internal"))
+		multiplayer.connect("peer_disconnected",Callable(self, "_on_peer_disconnected_internal"))
 	elif create_server_result == ERR_ALREADY_IN_USE:
 		push_error("Cannot create server - server already in use")
 		_server_connected = false
@@ -198,6 +205,7 @@ func _on_upnp_failure_internal():
 	
 func _on_peer_connected_internal(peer_id):
 	print("Peer connected with id: %s" % peer_id)
+	await get_tree().create_timer(1).timeout # TODO: remove this at some point
 	call("_on_peer_connected", peer_id)
 	if peer_id == 0 && _local_peer_is_server():
 		_on_confirm_connection_internal(peer_id)
@@ -214,9 +222,10 @@ func _send_snapshot(snapshot : Snapshot):
 	var serialized_snapshot : Dictionary = snapshot.serialize()
 	rpc("_on_snapshot_recieved_internal", serialized_snapshot)
 
-@rpc("any_peer") func _on_input_reported_internal(serialized_input : PackedByteArray):
+@rpc("any_peer") 
+func _on_input_reported_internal(serialized_input : PackedByteArray):
 	var input = _network_input_class.new().deserialize(serialized_input)
-	var entity_id = get_tree().get_remote_sender_id()
+	var entity_id = multiplayer.get_remote_sender_id()
 	server_input_manager.add_input(entity_id, input)
 #	call("_on_input_reported", input)
 
@@ -228,7 +237,8 @@ func _send_snapshot(snapshot : Snapshot):
 #	#rpc_id(1, "_on_reported_input_processed", input_id, input)	
 #	pass
 
-@rpc("any_peer") func _on_message_received_from_client_internal(msg : String, mode: String = "normal") -> void:
+@rpc("any_peer") 
+func _on_message_received_from_client_internal(msg : String, mode: String = "normal") -> void:
 	# TODO: Use the mode here for chat channels
 	var sender_peer_id : int = get_tree().get_remote_sender_id()
 	_broadcast_message(msg, sender_peer_id, mode)
@@ -242,14 +252,14 @@ func _broadcast_message(message : String, sender : int = 0, chat_mode : String =
 ### Exposed interpolation functionality #######################
 ####################################################
 	
-func _get_interpolated_server_state(time : int) -> InterpolatedSnapshot:
+func _get_interpolated_server_state(time : float) -> InterpolatedSnapshot:
 #	return _interpolate_state(time, server_snapshot_manager)
 	return server_snapshot_manager.calculate_interpolation_with_time(_entity_classes, time)
 	
-#func _get_interpolated_client_state(time : int) -> InterpolatedSnapshot:
+#func _get_interpolated_client_state(time : float) -> InterpolatedSnapshot:
 #	return _interpolate_state(time, client_snapshot_manager)
 	
-#func _interpolate_state(time : int, manager : SnapshotInterpolationManager) -> InterpolatedSnapshot:
+#func _interpolate_state(time : float, manager : SnapshotInterpolationManager) -> InterpolatedSnapshot:
 #	return manager
 	
 ####################################################

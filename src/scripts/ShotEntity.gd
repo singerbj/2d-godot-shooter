@@ -6,9 +6,9 @@ const interpolation_parameters = []
 const DEFAULT_COLOR = Color.WHITE
 
 var peer_id : int
-var time : int
-var origin : Vector3
-var normal : Vector3
+var time : float
+var origin : Vector2
+var normal : Vector2
 var hit : int
 var color : Color = DEFAULT_COLOR
 
@@ -35,9 +35,9 @@ func serialize():
 	
 	buffer.put_string(str(id))
 	buffer.put_u32(peer_id)
-	buffer.put_u32(time)
-	NetworkUtil.serialize_vector3(buffer, origin)
-	NetworkUtil.serialize_vector3(buffer, normal)
+	buffer.put_float(time)
+	NetworkUtil.serialize_vector2(buffer, origin)
+	NetworkUtil.serialize_vector2(buffer, normal)
 	buffer.put_u32(hit)
 	NetworkUtil.serialize_color(buffer, color)
 	
@@ -52,9 +52,9 @@ func deserialize(serialized : PackedByteArray):
 	return {
 		"id": buffer.get_string(),
 		"peer_id": buffer.get_u32(), 
-		"time": buffer.get_u32(),
-		"origin": NetworkUtil.deserialize_vector3(buffer),
-		"normal": NetworkUtil.deserialize_vector3(buffer),
+		"time": buffer.get_float(),
+		"origin": NetworkUtil.deserialize_vector2(buffer),
+		"normal": NetworkUtil.deserialize_vector2(buffer),
 		"hit": buffer.get_u32(),
 		"color": NetworkUtil.deserialize_color(buffer),
 	}

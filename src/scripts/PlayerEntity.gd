@@ -3,15 +3,11 @@ extends Entity
 class_name PlayerEntity
 
 const interpolation_parameters = [
-	"transform.origin.x", "transform.origin.y", "transform.origin.z",
-	"rotation.x", "rotation.y", "rotation.z",
-	"head_nod_angle"
+	"transform.origin.x", "transform.origin.y"
 ]
 
-var transform : Transform3D
-var velocity : Vector3
-var rotation : Vector3
-var head_nod_angle : float
+var transform : Transform2D
+var velocity : Vector2
 var health : float
 
 func _init(attributes):
@@ -24,8 +20,6 @@ func _init(attributes):
 	self.id = attr_dict.id
 	self.transform = attr_dict.transform
 	self.velocity = attr_dict.velocity
-	self.rotation = attr_dict.rotation
-	self.head_nod_angle = attr_dict.head_nod_angle
 	self.health = attr_dict.health
 
 static func get_class_name():
@@ -35,10 +29,8 @@ func serialize():
 	var buffer := StreamPeerBuffer.new()
 	
 	buffer.put_u32(id)
-	NetworkUtil.serialize_transform(buffer, transform)
-	NetworkUtil.serialize_vector3(buffer, velocity)
-	NetworkUtil.serialize_vector3(buffer, rotation)
-	buffer.put_float(head_nod_angle)
+	NetworkUtil.serialize_transform2D(buffer, transform)
+	NetworkUtil.serialize_vector2(buffer, velocity)
 	buffer.put_float(health)
 	
 	buffer.resize(buffer.get_position())
@@ -52,9 +44,7 @@ func deserialize(serialized : PackedByteArray):
 #	return get_script().new({
 	return {
 		"id": buffer.get_u32(),
-		"transform": NetworkUtil.deserialize_transform(buffer),
-		"velocity": NetworkUtil.deserialize_vector3(buffer),
-		"rotation": NetworkUtil.deserialize_vector3(buffer),
-		"head_nod_angle": buffer.get_float(),
+		"transform": NetworkUtil.deserialize_transform2D(buffer),
+		"velocity": NetworkUtil.deserialize_vector2(buffer),
 		"health": buffer.get_float(),
 	}

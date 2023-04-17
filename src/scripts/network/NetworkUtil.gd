@@ -33,7 +33,10 @@ static func get_cmd_line_ipaddress() -> String:
 		print("Command line ip not specified. Defaulting to localhost")
 	return ip_address
 
-static func serialize_transform(buffer : StreamPeerBuffer, transform : Transform3D) -> void:
+static func serialize_transform2D(buffer : StreamPeerBuffer, transform : Transform2D) -> void:
+	serialize_vector2(buffer, transform.origin)
+
+static func serialize_transform3D(buffer : StreamPeerBuffer, transform : Transform3D) -> void:
 	serialize_basis(buffer, transform.basis)
 	serialize_vector3(buffer, transform.origin)
 
@@ -52,12 +55,18 @@ static func serialize_vector3(buffer : StreamPeerBuffer, vector : Vector3) -> vo
 	buffer.put_float(vector.z)
 	
 static func serialize_color(buffer : StreamPeerBuffer, color : Color) -> void:
-	buffer.put_u32(color.r)
-	buffer.put_u32(color.g)
-	buffer.put_u32(color.b)
-	buffer.put_u32(color.a)
+	buffer.put_float(color.r)
+	buffer.put_float(color.g)
+	buffer.put_float(color.b)
+	buffer.put_float(color.a)
 	
-static func deserialize_transform(buffer : StreamPeerBuffer) -> Transform3D:
+static func deserialize_transform2D(buffer : StreamPeerBuffer) -> Transform2D:
+	var origin = deserialize_vector2(buffer)
+	var t = Transform2D()
+	t.origin = origin
+	return t
+	
+static func deserialize_transform3D(buffer : StreamPeerBuffer) -> Transform3D:
 	return Transform3D(deserialize_basis(buffer), deserialize_vector3(buffer))
 
 static func deserialize_basis(buffer : StreamPeerBuffer) -> Basis:
@@ -70,5 +79,5 @@ static func deserialize_vector3(buffer : StreamPeerBuffer) -> Vector3:
 	return Vector3(buffer.get_float(), buffer.get_float(), buffer.get_float())
 	
 static func deserialize_color(buffer : StreamPeerBuffer) -> Color:
-	return Color(buffer.get_u32(), buffer.get_u32(), buffer.get_u32(), buffer.get_u32())
+	return Color(buffer.get_float(), buffer.get_float(), buffer.get_float(), buffer.get_float())
 		

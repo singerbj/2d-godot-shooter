@@ -2,7 +2,7 @@ extends Node
 
 class_name WeaponManager
 
-var player : CharacterBody3D
+var player : CharacterBody2D
 var weapon_parent_node : Node
 var ui_node : Control
 
@@ -10,16 +10,16 @@ var weapon_map : Dictionary = {}
 var current_weapon : Gun
 
 var firing = false
-var current_shooting_origin : Vector3
-var current_shooting_normal : Vector3
+var current_shooting_origin : Vector2
+var current_shooting_normal : Vector2
 var hits = []
 
-func _init(player_arg : CharacterBody3D, weapon_parent_node_arg : Node):
+func _init(player_arg : CharacterBody2D, weapon_parent_node_arg : Node):
 	player = player_arg
 	weapon_parent_node = weapon_parent_node_arg
 	
-	_setup_gun(preload("res://src/scenes/Pistol.tscn"))
-	_setup_gun(preload("res://src/scenes/AssaultRifle.tscn"))
+	_setup_gun(preload("res://src/scenes/weapons/Pistol.tscn"))
+	_setup_gun(preload("res://src/scenes/weapons/AssaultRifle.tscn"))
 	
 	current_weapon = weapon_map[weapon_map.keys()[0]]
 	weapon_parent_node.add_child(current_weapon)

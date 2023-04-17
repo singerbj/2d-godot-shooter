@@ -2,7 +2,7 @@ extends NetworkManager
 
 var local_peer_id : int
 var players = {}
-var Player = preload("res://src/scenes/Player.tscn")
+var Player: PackedScene = preload("res://src/scenes/Player.tscn")
 var mouse_motion : Vector2 = Vector2(0, 0)
 var reconciliations : int = 0
 
@@ -12,6 +12,7 @@ const RECONCILIATION_FACTOR : float = 0.125
 const WEAPON_DAMAGE : float = 10.0 #TODO: Move this to a weapon manager thingy
 
 func _ready():
+	super()
 	var args = Array(OS.get_cmdline_args())
 	var start_server = "server" in args
 	var start_client = "client" in args
@@ -32,16 +33,24 @@ func _ready():
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
 func _physics_process(delta):
+	super(delta)
 	if Input.is_action_just_pressed("exit"):
 		get_tree().quit()
 		
 	if Input.is_action_just_pressed("camera_switch"):
-		if $Camera3D.current:
+		if $Camera2D.is_current():
 			players[local_peer_id].set_camera_active()
 		else:
-			$Camera3D.make_current()
+			$Camera2D.make_current()
+			
+	if Input.is_action_just_pressed("change_mouse_mode"):
+		if Input.get_mouse_mode() == Input.MOUSE_MODE_VISIBLE:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		else:
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		
 func _process(delta):
+	super(delta)
 	if local_peer_id in players:
 		$UI/Label.text = "[FPS: %s] [Reconciliations: %s] [Server Clock: %s] [Player Health: %s]" % [
 			str(Engine.get_frames_per_second()), 
@@ -49,20 +58,14 @@ func _process(delta):
 			players[local_peer_id].health
 		]
 	
-	if local_peer_id != null && local_peer_id in players:
-		players[local_peer_id].rotate_player_with_input(mouse_motion)
-		mouse_motion = Vector2(0, 0)
+#	if local_peer_id != null && local_peer_id in players:
+#		players[local_peer_id].rotate_player_with_input(mouse_motion)
+#		mouse_motion = Vector2(0, 0)
 		
-func _input(event) -> void:
-	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED && event is InputEventMouseMotion:
-		mouse_motion += event.relative
+#func _input(event) -> void:
+#	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED && event is InputEventMouseMotion:
+#		mouse_motion += event.relative
 		
-func _unhandled_input(event):
-	if Input.is_action_just_pressed("change_mouse_mode"):
-		if Input.get_mouse_mode() == Input.MOUSE_MODE_VISIBLE:
-			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-		else:
-			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 ########################################################
 ### Required Server Implementation Functions ###########
@@ -92,8 +95,6 @@ func _process_inputs(delta : float, peer_id : int, inputs : Array):
 	for input in inputs:
 		if peer_id in players:
 			if !_local_peer_is_server() || (_local_peer_is_server() && peer_id != local_peer_id):
-				if "rotation" in input && "head_nod_angle" in input && input["rotation"] != null && input["head_nod_angle"] != null:
-					players[peer_id].rotate_player_with_values(input["rotation"], input["head_nod_angle"])
 				players[peer_id].move(input, delta)
 				
 				if input["equip_weapon"] != Enums.WeaponSlot.NONE:
@@ -145,7 +146,7 @@ func _on_snapshot_recieved(snapshot : Snapshot):
 	
 func _on_update_local_entity(delta : float, entity : Entity):
 	if entity is PlayerEntity:
-		if local_peer_id != null:
+		if local_peer_id != null && local_peer_id in players:
 			if !entity.id in players:				
 				_on_peer_connected(entity.id)
 			if local_peer_id == entity.id:
@@ -167,12 +168,10 @@ func _on_input_data_requested() -> NetworkInput:
 	
 	if local_peer_id != null && local_peer_id in players:
 		input["player_id"] = local_peer_id
-		input["rotation"] = players[local_peer_id].rotation_degrees.y
-		input["head_nod_angle"] = players[local_peer_id].head_nod_angle
 		
-	if Input.is_action_pressed("m_forward"):
+	if Input.is_action_pressed("m_up"):
 		input["m_forward"] = true
-	if Input.is_action_pressed("m_backward"):
+	if Input.is_action_pressed("m_down"):
 		input["m_backward"] = true
 	if Input.is_action_pressed("m_left"):
 		input["m_left"] = true
@@ -186,14 +185,15 @@ func _on_input_data_requested() -> NetworkInput:
 		input["jump"] = true
 	if Input.is_action_pressed("shoot"):
 		input["shooting"] = true
-		var player_camera = players[local_peer_id].get_camera_3d()
-		var shooting_origin = player_camera.project_ray_origin(Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2))
-		var shooting_normal = player_camera.project_ray_normal(Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2))
-		input["shooting_origin"] = shooting_origin
-		input["shooting_normal"] = shooting_normal
-		$UI/ShootLabel.text = "Shooting!"
-#		$UI/ShootDataLabel.text = str(shooting_origin) + "\n" + str(shooting_normal)
-		players[local_peer_id].weapon_manager.pull_trigger(input["shooting_origin"], input["shooting_normal"])
+		if local_peer_id in players:
+#			var player_camera = players[local_peer_id].get_camera_2d()
+#			var shooting_origin = player_camera.project_ray_origin(Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2))
+#			var shooting_normal = player_camera.project_ray_normal(Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2))
+#			input["shooting_origin"] = shooting_origin
+#			input["shooting_normal"] = shooting_normal
+			$UI/ShootLabel.text = "Shooting!"
+#			$UI/ShootDataLabel.text = str(shooting_origin) + "\n" + str(shooting_normal)
+#			players[local_peer_id].weapon_manager.pull_trigger(input["shooting_origin"], input["shooting_normal"])
 	else:
 		if local_peer_id in players:
 			players[local_peer_id].weapon_manager.release_trigger()
@@ -215,20 +215,22 @@ func _on_client_side_predict(delta : float, input : NetworkInput):
 func _on_server_reconcile(delta : float, latest_server_snapshot : Snapshot, closest_client_snaphot : InterpolatedSnapshot, input_buffer : Array):
 	var server_entity : Entity
 	var client_entity : Entity
-	if local_peer_id in latest_server_snapshot.state:
-		server_entity = latest_server_snapshot.state[local_peer_id]
-	if local_peer_id in closest_client_snaphot.state:
-		client_entity = closest_client_snaphot.state[local_peer_id]
-			
-	if server_entity != null && client_entity != null:
-		# calculate the offset between server and client
-		var offset_x = abs(players[local_peer_id].transform.origin.x - server_entity.transform.origin.x)
-		var offset_y = abs(players[local_peer_id].transform.origin.y - server_entity.transform.origin.y)
-		var offset_z = abs(players[local_peer_id].transform.origin.z - server_entity.transform.origin.z)
+	if local_peer_id in players:
+		if local_peer_id in latest_server_snapshot.state:
+			server_entity = latest_server_snapshot.state[local_peer_id]
+		if local_peer_id in closest_client_snaphot.state:
+			client_entity = closest_client_snaphot.state[local_peer_id]
+				
+		if server_entity != null && client_entity != null:
+			# calculate the offset between server and client
+			var offset_x = abs(players[local_peer_id].transform.origin.x - server_entity.transform.origin.x)
+			var offset_y = abs(players[local_peer_id].transform.origin.y - server_entity.transform.origin.y)
 
-		if offset_x > RECONCILIATION_TOLERANCE || offset_y > RECONCILIATION_TOLERANCE || offset_z > RECONCILIATION_TOLERANCE:
-			reconciliations += 1
-			players[local_peer_id].transform.origin = players[local_peer_id].transform.origin.lerp(server_entity.transform.origin, RECONCILIATION_FACTOR)
+			if offset_x > RECONCILIATION_TOLERANCE || offset_y > RECONCILIATION_TOLERANCE:
+				reconciliations += 1
+				var local_origin = players[local_peer_id].transform.origin
+				var server_origin = server_entity.transform.origin
+				players[local_peer_id].transform.origin = lerp(local_origin, server_origin, RECONCILIATION_FACTOR)
 	
 func _on_message_received_from_server():
 	pass
@@ -250,8 +252,6 @@ func _on_request_entities() -> Dictionary:
 			"id": peer_id, 
 			"transform": players[peer_id].transform, 
 			"velocity": players[peer_id].velocity, 
-			"rotation": players[peer_id].rotation,
-			"head_nod_angle": players[peer_id].head_nod_angle,
 			"health": players[peer_id].health,
 		})
 		entities[player_entity.id] = player_entity

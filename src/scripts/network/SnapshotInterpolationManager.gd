@@ -9,7 +9,7 @@ var _network_config
 var _interpolation_buffer
 var _auto_correct_time_offset
 var _whitespace_regex : RegEx
-var _time_offset = -1
+var _time_offset: float = -1.0
 
 var server_time = 0
 
@@ -24,11 +24,11 @@ func _init(name : String,network_config : NetworkConfig,auto_correct_time_offset
 
 func create_snapshot(state : Dictionary, last_processed_input_ids : Dictionary):
 	var new_id = NetworkUtil.gen_unique_string(6)
-	return Snapshot.new(new_id, Time.get_ticks_msec(), state, last_processed_input_ids)
+	return Snapshot.new(new_id, Time.get_unix_time_from_system(), state, last_processed_input_ids)
 
 func add_snapshot(snapshot : Snapshot):
 #	print("[%s] Adding snapshot" % _name)
-	var now = Time.get_ticks_msec()
+	var now = Time.get_unix_time_from_system()
 	
 	if _time_offset == -1:
 		_time_offset = now - snapshot.time
@@ -44,15 +44,15 @@ func add_snapshot(snapshot : Snapshot):
 			
 	vault.add(snapshot)
 
-func sample(snapshot_a : Snapshot, snapshot_b : Snapshot, time : int, entity_classes : Dictionary) -> InterpolatedSnapshot:
+func sample(snapshot_a : Snapshot, snapshot_b : Snapshot, time : float, entity_classes : Dictionary) -> InterpolatedSnapshot:
 	var snapshot_array = [snapshot_a, snapshot_b]
 	snapshot_array.sort_custom(Callable(NetworkUtil,"sort_snapshots"))
 	
 	var newer : Snapshot = snapshot_array[0]
 	var older : Snapshot = snapshot_array[1]
 
-	var t0 : int = newer.time
-	var t1 : int = older.time
+	var t0 : float = newer.time
+	var t1 : float = older.time
 	
 	var zero_percent = time - t1
 	var hundred_percent = t0 - t1
@@ -117,22 +117,22 @@ func sample(snapshot_a : Snapshot, snapshot_b : Snapshot, time : int, entity_cla
 	var interpolatedSnapshot : InterpolatedSnapshot = InterpolatedSnapshot.new(temp_snapshot.state, p_percent, newer.id, older.id)
 	return interpolatedSnapshot
 
-func get_server_time() -> int:
+func get_server_time() -> float:
 #	print(_name, " _time_offset ", _time_offset, " _interpolation_buffer ", _interpolation_buffer)
-	return Time.get_ticks_msec() - _time_offset
+	return Time.get_unix_time_from_system() - _time_offset
 	
-#func get_client_adjusted_server_time() -> int:
+#func get_client_adjusted_server_time() -> float:
 ##	print(_name, " _time_offset ", _time_offset, " _interpolation_buffer ", _interpolation_buffer)
-#	return Time.get_ticks_msec() - _time_offset - _interpolation_buffer
+#	return Time.get_unix_time_from_system() - _time_offset - _interpolation_buffer
 	
 func calculate_client_adjusted_interpolation(entity_classes : Dictionary) -> InterpolatedSnapshot:
 #	return calculate_interpolation_with_time(entity_classes, get_client_adjusted_server_time())
 	return calculate_interpolation_with_time(entity_classes, get_server_time())
 	
-func calculate_interpolation_with_time(entity_classes : Dictionary, time : int) -> InterpolatedSnapshot:
+func calculate_interpolation_with_time(entity_classes : Dictionary, time : float) -> InterpolatedSnapshot:
 	var snapshots = vault.get_surrounding_snapshots(time)
 	if snapshots[0] == null || snapshots[1] == null: 
-		push_error("Either a before or after snapshot could not be found for interpolation")
+		print("Either a before or after snapshot could not be found for interpolation")
 		return null
 	
 	return sample(snapshots[0], snapshots[1], time, entity_classes)

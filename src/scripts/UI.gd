@@ -10,11 +10,8 @@ func _ready():
 func _physics_process(delta):
 	var window_width = get_viewport().get_visible_rect().size.x
 	var window_height = get_viewport().get_visible_rect().size.y
-	var pos_x = (window_width / 2) - ($Crosshair.size.x / 2)
-	var pos_y = (window_height / 2) - ($Crosshair.size.y / 2)
-	$Crosshair.position = Vector2(pos_x, pos_y)
-	pos_x = (window_width / 2) - ($Hitmarker.size.x / 2)
-	pos_y = (window_height / 2) - ($Hitmarker.size.y / 2)
+	var pos_x = (window_width / 2) - ($Hitmarker.size.x / 2)
+	var pos_y = (window_height / 2) - ($Hitmarker.size.y / 2)
 	$Hitmarker.position = Vector2(pos_x, pos_y)
 
 func _process(delta):

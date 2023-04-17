@@ -20,14 +20,15 @@ func setup_animations():
 	animation_player = AnimationPlayer.new()
 	add_child(animation_player)
 	
-	var animation = Animation.new()
-	animation_player.add_animation_library("fire_gun", animation)
-	var idx = animation.add_track(Animation.TYPE_METHOD, 0)
-	animation.track_set_path(idx, ".")
-	animation.length = SECONDS_IN_A_MINUTE / fire_rate_rpm
-	animation.step = ANIMATION_STEP
-	animation.loop = true
-	animation.track_insert_key(idx, 0, { "method" : "fire_gun" , "args" : [] })
+	#TODO: fix this
+#	var animation = Animation.new()
+#	animation_player.add_animation_library("fire_gun", animation)
+#	var idx = animation.add_track(Animation.TYPE_METHOD, 0)
+#	animation.track_set_path(idx, ".")
+#	animation.length = SECONDS_IN_A_MINUTE / fire_rate_rpm
+#	animation.step = ANIMATION_STEP
+#	animation.loop_mode = Animation.LOOP_LINEAR
+#	animation.track_insert_key(idx, 0, { "method" : "fire_gun" , "args" : [] })
 	
 func fire_gun():
 	weapon_manager.fire_shot()

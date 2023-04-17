@@ -95,7 +95,8 @@ func fire_client_detection_shot(shot : ShotEntity, exclude : Array = [], server_
 	
 func _render_shot(from : Vector3, to : Vector3, color : Color) -> void:
 	# Lower the drawing of the shot just a touch so we can see it when we are not moving
-	DrawLine3d.draw_line_3d(from - Vector3(0, 0.05, 0), to, color)
+#	DrawLine3d.draw_line_3d(from - Vector3(0, 0.05, 0), to, color)
+	pass # TODO: fix this
 	
 func get_new_shot_id() -> int:
 	shot_id_counter += 1
