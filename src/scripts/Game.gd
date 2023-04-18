@@ -6,8 +6,8 @@ var Player: PackedScene = preload("res://src/scenes/Player.tscn")
 var mouse_motion : Vector2 = Vector2(0, 0)
 var reconciliations : int = 0
 
-const RECONCILIATION_TOLERANCE : float = 8.0
-const RECONCILIATION_FACTOR : float = 0.125
+const RECONCILIATION_TOLERANCE : float = 50.0
+#const RECONCILIATION_FACTOR : float = 0.5 #0.125
 
 const WEAPON_DAMAGE : float = 10.0 #TODO: Move this to a weapon manager thingy
 
@@ -29,8 +29,9 @@ func _ready():
 	if start_server && start_client:
 		get_window().set_title("Server and Client")
 	
-	if start_client:
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	# TODO: determine if this should be done, if I will replace with a cursor
+#	if start_client:
+#		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
 func _physics_process(delta):
 	super(delta)
@@ -57,7 +58,11 @@ func _process(delta):
 			reconciliations, server_snapshot_manager.get_server_time(),
 			players[local_peer_id].health
 		]
-	
+		var player_camera = players[local_peer_id].get_camera_2d()
+		var viewport_size = Vector2(get_viewport().size.x / player_camera.zoom.x, get_viewport().size.y / player_camera.zoom.y)
+		
+		$UI.global_position = Vector2(players[local_peer_id].global_position.x - (viewport_size.x / 2), players[local_peer_id].global_position.y - (viewport_size.y / 2))
+		
 #	if local_peer_id != null && local_peer_id in players:
 #		players[local_peer_id].rotate_player_with_input(mouse_motion)
 #		mouse_motion = Vector2(0, 0)
@@ -208,7 +213,7 @@ func _on_input_data_requested() -> NetworkInput:
 func _on_client_side_predict(delta : float, input : NetworkInput):
 	if local_peer_id in players:
 		players[local_peer_id].move(input, delta)
-		
+
 		if input["equip_weapon"] != Enums.WeaponSlot.NONE:
 			players[local_peer_id].equip_weapon(input["equip_weapon"])
 
@@ -226,11 +231,22 @@ func _on_server_reconcile(delta : float, latest_server_snapshot : Snapshot, clos
 			var offset_x = abs(players[local_peer_id].transform.origin.x - server_entity.transform.origin.x)
 			var offset_y = abs(players[local_peer_id].transform.origin.y - server_entity.transform.origin.y)
 
-			if offset_x > RECONCILIATION_TOLERANCE || offset_y > RECONCILIATION_TOLERANCE:
+			print(offset_x, ", ", offset_y)
+			if offset_x > RECONCILIATION_TOLERANCE || offset_y > RECONCILIATION_TOLERANCE * 3:
 				reconciliations += 1
-				var local_origin = players[local_peer_id].transform.origin
-				var server_origin = server_entity.transform.origin
-				players[local_peer_id].transform.origin = lerp(local_origin, server_origin, RECONCILIATION_FACTOR)
+				
+#				# This is the slidey way of doing reconciliation
+#				var local_origin = players[local_peer_id].transform.origin
+#				var server_origin = server_entity.transform.origin
+#				players[local_peer_id].transform.origin = lerp(local_origin, server_origin, RECONCILIATION_FACTOR)
+						
+				players[local_peer_id].transform = server_entity.transform
+				players[local_peer_id].velocity = server_entity.velocity
+				var last_input_index = -1
+				for i in len(input_buffer):
+					var input = input_buffer[i]
+					if input.id > latest_server_snapshot.last_processed_input_ids[local_peer_id]:
+						players[local_peer_id].move(input, delta)
 	
 func _on_message_received_from_server():
 	pass

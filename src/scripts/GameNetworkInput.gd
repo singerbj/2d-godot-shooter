@@ -10,8 +10,8 @@ var m_right : bool
 var equip_weapon : int = Enums.WeaponSlot.NONE
 var jump : bool
 var shooting : bool
-var shooting_origin : Vector3
-var shooting_normal : Vector3
+var shooting_origin : Vector2
+var shooting_normal : Vector2
 var hit : int = -1 # Do this to prevent the server player from always taking damage
 
 func serialize():
@@ -28,8 +28,8 @@ func serialize():
 	buffer.put_8(equip_weapon)
 	buffer.put_u8(int(jump))
 	buffer.put_u8(int(shooting))
-	NetworkUtil.serialize_vector3(buffer, shooting_origin)
-	NetworkUtil.serialize_vector3(buffer, shooting_normal)
+	NetworkUtil.serialize_vector2(buffer, shooting_origin)
+	NetworkUtil.serialize_vector2(buffer, shooting_normal)
 	buffer.put_u32(hit)	
 	
 	buffer.resize(buffer.get_position())
@@ -52,8 +52,8 @@ func deserialize(serialized : PackedByteArray):
 	deserialized_network_input["equip_weapon"] = buffer.get_8()
 	deserialized_network_input["jump"] = bool(buffer.get_u8())
 	deserialized_network_input["shooting"] = bool(buffer.get_u8())
-	deserialized_network_input["shooting_origin"] = NetworkUtil.deserialize_vector3(buffer)
-	deserialized_network_input["shooting_normal"] = NetworkUtil.deserialize_vector3(buffer)
+	deserialized_network_input["shooting_origin"] = NetworkUtil.deserialize_vector2(buffer)
+	deserialized_network_input["shooting_normal"] = NetworkUtil.deserialize_vector2(buffer)
 	deserialized_network_input["hit"] = buffer.get_u32()
 	
 	return deserialized_network_input

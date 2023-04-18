@@ -317,12 +317,12 @@ func _physics_process(delta):
 					call("_on_update_local_entity", delta, entity)
 					
 #		# gather inputs and send them to the server
-#		var input_data : Dictionary = call("_on_input_data_requested")
-#		var input : NetworkInput = NetworkInput.new(_physics_process_tick, delta, server_snapshot_manager.get_server_time(), input_data)
+#		var input : NetworkInput = call("_on_input_data_requested")
+#		input._set_required_data(_physics_process_tick, delta, server_snapshot_manager.get_server_time())
 #		client_input_manager.add_input(_local_peer_id, input)
 #		_report_input(input)
-#
-#		# client side predict
+##
+##		# client side predict
 #		call("_on_client_side_predict", delta, input)
 		
 		if !_local_peer_is_server():

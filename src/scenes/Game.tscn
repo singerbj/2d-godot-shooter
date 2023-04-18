@@ -78,7 +78,6 @@ shape = SubResource("RectangleShape2D_d5mut")
 script = ExtResource("2_qi3kk")
 
 [node name="UI" type="Control" parent="."]
-visible = false
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("6")
