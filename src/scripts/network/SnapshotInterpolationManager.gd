@@ -27,7 +27,6 @@ func create_snapshot(state : Dictionary, last_processed_input_ids : Dictionary):
 	return Snapshot.new(new_id, Time.get_unix_time_from_system() * 1000, state, last_processed_input_ids)
 
 func add_snapshot(snapshot : Snapshot):
-#	print("[%s] Adding snapshot" % _name)
 	var now = Time.get_unix_time_from_system() * 1000
 	
 	if _time_offset == -1:
@@ -35,8 +34,6 @@ func add_snapshot(snapshot : Snapshot):
 		
 	if _auto_correct_time_offset:
 		var time_offset = now - snapshot.time
-#		print(name, " =====================>", now, snapshot.time)
-#		print("=> _time_offset ", _time_offset, " => time_offset ", time_offset)
 		var time_difference = abs(_time_offset - time_offset)
 #		print("time_difference ", time_difference) # TODO: this is always 0 on the client side which is a bug
 		if(time_difference > _network_config.DEFAULT_MAX_TIME_OFFSET_MS):

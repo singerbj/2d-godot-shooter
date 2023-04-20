@@ -17,7 +17,7 @@ func _ready():
 	var start_server = "server" in args
 	var start_client = "client" in args
 	if !start_server && !start_client: # TODO: put these in a config file that is in gitignore?
-		start_server = false
+		start_server = true
 		start_client = true
 
 	if start_server:
