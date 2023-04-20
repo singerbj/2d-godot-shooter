@@ -6,7 +6,7 @@ var vault
 
 var _name : String
 var _network_config
-var _interpolation_buffer
+#var _interpolation_buffer
 var _auto_correct_time_offset
 var _whitespace_regex : RegEx
 var _time_offset: float = -1.0
@@ -17,18 +17,18 @@ func _init(name : String,network_config : NetworkConfig,auto_correct_time_offset
 	_name = name
 	_network_config = network_config
 	vault = Vault.new(_network_config)
-	_interpolation_buffer = (1000 / Engine.physics_ticks_per_second) * _network_config.DEFAULT_INTERPOLATION_BUFFER_MULTIPLIER
+#	_interpolation_buffer = (1000 / Engine.physics_ticks_per_second) * _network_config.DEFAULT_INTERPOLATION_BUFFER_MULTIPLIER
 	_auto_correct_time_offset = auto_correct_time_offset
 	_whitespace_regex = RegEx.new()
 	_whitespace_regex.compile("\\W+")
 
 func create_snapshot(state : Dictionary, last_processed_input_ids : Dictionary):
 	var new_id = NetworkUtil.gen_unique_string(6)
-	return Snapshot.new(new_id, Time.get_unix_time_from_system(), state, last_processed_input_ids)
+	return Snapshot.new(new_id, Time.get_unix_time_from_system() * 1000, state, last_processed_input_ids)
 
 func add_snapshot(snapshot : Snapshot):
 #	print("[%s] Adding snapshot" % _name)
-	var now = Time.get_unix_time_from_system()
+	var now = Time.get_unix_time_from_system() * 1000
 	
 	if _time_offset == -1:
 		_time_offset = now - snapshot.time
@@ -118,15 +118,9 @@ func sample(snapshot_a : Snapshot, snapshot_b : Snapshot, time : float, entity_c
 	return interpolatedSnapshot
 
 func get_server_time() -> float:
-#	print(_name, " _time_offset ", _time_offset, " _interpolation_buffer ", _interpolation_buffer)
-	return Time.get_unix_time_from_system() - _time_offset
-	
-#func get_client_adjusted_server_time() -> float:
-##	print(_name, " _time_offset ", _time_offset, " _interpolation_buffer ", _interpolation_buffer)
-#	return Time.get_unix_time_from_system() - _time_offset - _interpolation_buffer
+	return (Time.get_unix_time_from_system() * 1000) - _time_offset
 	
 func calculate_client_adjusted_interpolation(entity_classes : Dictionary) -> InterpolatedSnapshot:
-#	return calculate_interpolation_with_time(entity_classes, get_client_adjusted_server_time())
 	return calculate_interpolation_with_time(entity_classes, get_server_time())
 	
 func calculate_interpolation_with_time(entity_classes : Dictionary, time : float) -> InterpolatedSnapshot:

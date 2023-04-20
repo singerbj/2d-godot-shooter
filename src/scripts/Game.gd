@@ -32,7 +32,7 @@ func _ready():
 	# TODO: determine if this should be done, if I will replace with a cursor
 #	if start_client:
 #		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	
+
 func _physics_process(delta):
 	super(delta)
 	if Input.is_action_just_pressed("exit"):
@@ -231,7 +231,6 @@ func _on_server_reconcile(delta : float, latest_server_snapshot : Snapshot, clos
 			var offset_x = abs(players[local_peer_id].transform.origin.x - server_entity.transform.origin.x)
 			var offset_y = abs(players[local_peer_id].transform.origin.y - server_entity.transform.origin.y)
 
-			print(offset_x, ", ", offset_y)
 			if offset_x > RECONCILIATION_TOLERANCE || offset_y > RECONCILIATION_TOLERANCE * 3:
 				reconciliations += 1
 				

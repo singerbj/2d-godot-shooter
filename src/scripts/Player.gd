@@ -38,8 +38,7 @@ var bot_move_key = "m_left"
 
 func _ready():
 	weapon_manager = WeaponManager.new(self, self)
-	
-	
+
 var gravity_vec = Vector2()
 var temp_velocity = Vector2()
 func move(input : NetworkInput, local_delta : float):
