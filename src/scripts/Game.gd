@@ -5,9 +5,12 @@ var players = {}
 var Player: PackedScene = preload("res://src/scenes/Player.tscn")
 var mouse_motion : Vector2 = Vector2(0, 0)
 var reconciliations : int = 0
+var time_outside_reconciliation_tolerance : int = 0
 
-const RECONCILIATION_TOLERANCE : float = 100.0
-#const RECONCILIATION_FACTOR : float = 0.5 #0.125
+const X_RECONCILIATION_TOLERANCE : float = 100.0
+const Y_RECONCILIATION_TOLERANCE : float = X_RECONCILIATION_TOLERANCE * 3
+const MAX_TIME_WITHOUT_RECONCILIATION_S : float = 1.0
+const RECONCILIATION_FACTOR : float = 0.125
 
 const WEAPON_DAMAGE : float = 10.0 #TODO: Move this to a weapon manager thingy
 
@@ -17,7 +20,7 @@ func _ready():
 	var start_server = "server" in args
 	var start_client = "client" in args
 	if !start_server && !start_client: # TODO: put these in a config file that is in gitignore?
-		start_server = true
+		start_server = false
 		start_client = true
 
 	if start_server:
@@ -53,9 +56,11 @@ func _physics_process(delta):
 func _process(delta):
 	super(delta)
 	if local_peer_id in players:
-		$UI/Label.text = "[FPS: %s] [Reconciliations: %s] [Server Clock: %s] [Player Health: %s]" % [
+		$UI/Label.text = "[FPS: %s] [Reconciliations: %s] [Time w/o Reconciliation: %s] [Server Clock: %s] [Player Health: %s]" % [
 			str(Engine.get_frames_per_second()), 
-			reconciliations, server_snapshot_manager.get_server_time(),
+			reconciliations, 
+			time_outside_reconciliation_tolerance,
+			server_snapshot_manager.get_server_time(),
 			players[local_peer_id].health
 		]
 		var player_camera = players[local_peer_id].get_camera_2d()
@@ -100,7 +105,7 @@ func _process_inputs(delta : float, peer_id : int, inputs : Array):
 	for input in inputs:
 		if peer_id in players:
 			if !_local_peer_is_server() || (_local_peer_is_server() && peer_id != local_peer_id):
-				players[peer_id].move(input, delta)
+				players[peer_id].move(delta, (input.delta / delta), input)
 				
 				if input["equip_weapon"] != Enums.WeaponSlot.NONE:
 					players[peer_id].equip_weapon(input["equip_weapon"])
@@ -212,7 +217,7 @@ func _on_input_data_requested() -> NetworkInput:
 		
 func _on_client_side_predict(delta : float, input : NetworkInput):
 	if local_peer_id in players:
-		players[local_peer_id].move(input, delta)
+		players[local_peer_id].move(delta, (input.delta / delta), input)
 
 		if input["equip_weapon"] != Enums.WeaponSlot.NONE:
 			players[local_peer_id].equip_weapon(input["equip_weapon"])
@@ -231,23 +236,34 @@ func _on_server_reconcile(delta : float, latest_server_snapshot : Snapshot, clos
 			var offset_x = abs(players[local_peer_id].transform.origin.x - server_entity.transform.origin.x)
 			var offset_y = abs(players[local_peer_id].transform.origin.y - server_entity.transform.origin.y)
 
-			if offset_x > RECONCILIATION_TOLERANCE || offset_y > RECONCILIATION_TOLERANCE * 3:
-				reconciliations += 1
-				# TODO make this be something that works over a period of time of error, not at an instant
+			var local_origin = players[local_peer_id].transform.origin
+			var server_origin = server_entity.transform.origin
+			var local_velocity = players[local_peer_id].velocity
+			var server_velocity = server_entity.velocity
+			if offset_x > X_RECONCILIATION_TOLERANCE || offset_y > Y_RECONCILIATION_TOLERANCE:
+				time_outside_reconciliation_tolerance += 1
 				
-#				# This is the slidey way of doing reconciliation
-#				var local_origin = players[local_peer_id].transform.origin
-#				var server_origin = server_entity.transform.origin
-#				players[local_peer_id].transform.origin = lerp(local_origin, server_origin, RECONCILIATION_FACTOR)
+				# This is the slidey way of doing reconciliation. let's do this to try and help nudge the player back a bit
+				players[local_peer_id].transform.origin = lerp(local_origin, server_origin, RECONCILIATION_FACTOR)
+				players[local_peer_id].velocity = lerp(local_velocity, server_velocity, RECONCILIATION_FACTOR)
+			else:
+				time_outside_reconciliation_tolerance = 0
+				
+			if time_outside_reconciliation_tolerance > (MAX_TIME_WITHOUT_RECONCILIATION_S * Engine.physics_ticks_per_second):			
+				reconciliations += 1
+				
+				# This is the snapping way of doing reconciliation
+				players[local_peer_id].transform.origin = server_origin
+				players[local_peer_id].velocity = server_velocity
 
-				# This is the replay way of doing reconciliation
-				players[local_peer_id].transform = server_entity.transform
-				players[local_peer_id].velocity = server_entity.velocity
-				var last_input_index = -1
-				for i in len(input_buffer):
-					var input = input_buffer[i]
-					if input.id > latest_server_snapshot.last_processed_input_ids[local_peer_id]:
-						players[local_peer_id].move(input, delta)
+#				# This is the replay way of doing reconciliation
+#				players[local_peer_id].transform = server_entity.transform
+#				players[local_peer_id].velocity = server_entity.velocity
+#				var last_input_index = -1
+#				for i in len(input_buffer):
+#					var input = input_buffer[i]
+#					if input.id > latest_server_snapshot.last_processed_input_ids[local_peer_id]:
+#						players[local_peer_id].move(delta, (input.delta / delta), input)
 	
 func _on_message_received_from_server():
 	pass

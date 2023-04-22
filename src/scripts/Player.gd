@@ -5,7 +5,7 @@ const ground_decceleration: float = 45.0 #1000 / 10
 const air_decceleration: float = 55.0 #500 / 10
 const gravity_acceleration: float = 18.0 #4000 / 5
 
-const vertical_jump_speed: float = 1100 #1500 / 3
+const vertical_jump_speed: float = 700 #1100 #1500 / 3
 const grab_slide_speed: float = 60 #60 / 10
 const horizontal_jump_speed: float = 500 #800 / 10
 
@@ -46,7 +46,7 @@ func _ready():
 #	floor_constant_speed = true
 #	floor_snap_length = 1.0
 	
-func move(input : NetworkInput, local_delta : float):
+func move(local_delta : float, calculated_delta : float, input : NetworkInput):
 	$RayCast2DLeft.force_raycast_update()
 	$RayCast2DRight.force_raycast_update()
 	$RayCast2DBottom.force_raycast_update()
@@ -85,7 +85,7 @@ func move(input : NetworkInput, local_delta : float):
 		y_velocity += gravity_acceleration
 		
 
-	if input["jump"]: # TODO: should be just pressed
+	if input["jump"]:
 		if _is_on_left_wall() && after_wall_jump_cooldown == 0 && wall_grab_energy > 0:
 			y_velocity = -vertical_jump_speed
 			x_velocity = horizontal_jump_speed
@@ -102,13 +102,11 @@ func move(input : NetworkInput, local_delta : float):
 		if y_velocity <= grab_slide_speed:
 			y_velocity = grab_slide_speed
 			
-	velocity = Vector2(x_velocity, y_velocity) * (input.delta / local_delta)
+	velocity = Vector2(x_velocity, y_velocity) * calculated_delta
 	
 	move_and_slide()
 
-	target_rotation_degrees = (velocity.x / max_speed) * max_lean_degrees
-
-	$TextEdit.text = str(is_on_floor())
+	$TextEdit.text = str(local_delta) + "  " + str(calculated_delta)
 	
 func _physics_process(_delta):
 	# modify wall jump cooldown properly
@@ -120,10 +118,16 @@ func _physics_process(_delta):
 
 func _process(_delta):
 	# modify player tilt based on velocity
+	target_rotation_degrees = (velocity.x / max_speed) * max_lean_degrees
 	rotation_degrees = lerp(rotation_degrees, target_rotation_degrees, lean_speed)
+	
+	# redraw shapes
+	queue_redraw()
 	
 func _draw():
 	$CollisionShape2D.shape.draw(get_canvas_item(), Color(1, 1, 1, 0.25))
+	
+	draw_circle(get_local_mouse_position(), 20, Color(1, 0, 0, 0.25))
 	
 func _is_grabbing_wall() -> bool:
 	return _is_grabbing_left_wall() || _is_grabbing_right_wall()
@@ -154,6 +158,7 @@ func update_local_player_from_server(entity : PlayerEntity):
 
 func update_peer_player_from_server(entity : PlayerEntity):
 	transform.origin = entity.transform.origin
+	velocity = entity.velocity
 	health = entity.health
 
 func take_damage(damage : float):
