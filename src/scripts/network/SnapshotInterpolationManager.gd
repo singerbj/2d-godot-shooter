@@ -6,7 +6,7 @@ var vault
 
 var _name : String
 var _network_config
-#var _interpolation_buffer
+var _interpolation_buffer # TODO - this needs to be introduced again I think
 var _auto_correct_time_offset
 var _whitespace_regex : RegEx
 var _time_offset: float = -1.0
@@ -17,7 +17,7 @@ func _init(name : String,network_config : NetworkConfig,auto_correct_time_offset
 	_name = name
 	_network_config = network_config
 	vault = Vault.new(_network_config)
-#	_interpolation_buffer = (1000 / Engine.physics_ticks_per_second) * _network_config.DEFAULT_INTERPOLATION_BUFFER_MULTIPLIER
+	_interpolation_buffer = (1000 / Engine.physics_ticks_per_second) * _network_config.DEFAULT_INTERPOLATION_BUFFER_MULTIPLIER
 	_auto_correct_time_offset = auto_correct_time_offset
 	_whitespace_regex = RegEx.new()
 	_whitespace_regex.compile("\\W+")
@@ -116,6 +116,10 @@ func sample(snapshot_a : Snapshot, snapshot_b : Snapshot, time : float, entity_c
 
 func get_server_time() -> float:
 	return (Time.get_unix_time_from_system() * 1000) - _time_offset
+	
+#func get_client_adjusted_server_time() -> int:
+##	print(_name, " _time_offset ", _time_offset, " _interpolation_buffer ", _interpolation_buffer)
+#	return OS.get_system_time_msecs() - _time_offset - _interpolation_buffer
 	
 func calculate_client_adjusted_interpolation(entity_classes : Dictionary) -> InterpolatedSnapshot:
 	return calculate_interpolation_with_time(entity_classes, get_server_time())

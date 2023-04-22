@@ -6,7 +6,7 @@ var Player: PackedScene = preload("res://src/scenes/Player.tscn")
 var mouse_motion : Vector2 = Vector2(0, 0)
 var reconciliations : int = 0
 
-const RECONCILIATION_TOLERANCE : float = 50.0
+const RECONCILIATION_TOLERANCE : float = 100.0
 #const RECONCILIATION_FACTOR : float = 0.5 #0.125
 
 const WEAPON_DAMAGE : float = 10.0 #TODO: Move this to a weapon manager thingy
@@ -186,7 +186,7 @@ func _on_input_data_requested() -> NetworkInput:
 		input["equip_weapon"] = Enums.WeaponSlot.WEAPON_SLOT_0
 	if Input.is_action_just_pressed("equip_weapon_1"):
 		input["equip_weapon"] = Enums.WeaponSlot.WEAPON_SLOT_1
-	if Input.is_action_pressed("jump"):
+	if Input.is_action_just_pressed("jump"):
 		input["jump"] = true
 	if Input.is_action_pressed("shoot"):
 		input["shooting"] = true
@@ -233,12 +233,14 @@ func _on_server_reconcile(delta : float, latest_server_snapshot : Snapshot, clos
 
 			if offset_x > RECONCILIATION_TOLERANCE || offset_y > RECONCILIATION_TOLERANCE * 3:
 				reconciliations += 1
+				# TODO make this be something that works over a period of time of error, not at an instant
 				
 #				# This is the slidey way of doing reconciliation
 #				var local_origin = players[local_peer_id].transform.origin
 #				var server_origin = server_entity.transform.origin
 #				players[local_peer_id].transform.origin = lerp(local_origin, server_origin, RECONCILIATION_FACTOR)
-						
+
+				# This is the replay way of doing reconciliation
 				players[local_peer_id].transform = server_entity.transform
 				players[local_peer_id].velocity = server_entity.velocity
 				var last_input_index = -1
