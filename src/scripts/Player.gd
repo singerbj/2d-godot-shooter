@@ -55,15 +55,15 @@ func move(local_delta : float, calculated_delta : float, input : NetworkInput):
 	var jump = false
 
 	# Move like a bot
-	if self.is_bot:
-		bot_move_time += 1
-		if bot_move_time > MAX_BOT_MOVE_TIME:
-			bot_move_time = 0
-			if bot_move_key == "m_left":
-				bot_move_key = "m_right"
-			else:
-				bot_move_key = "m_left"
-		input[bot_move_key] = true
+#	if self.is_bot:
+#		bot_move_time += 1
+#		if bot_move_time > MAX_BOT_MOVE_TIME:
+#			bot_move_time = 0
+#			if bot_move_key == "m_left":
+#				bot_move_key = "m_right"
+#			else:
+#				bot_move_key = "m_left"
+#		input[bot_move_key] = true
 
 	if after_wall_jump_cooldown == 0:
 		if input["m_left"] && x_velocity > -max_speed:
@@ -102,7 +102,7 @@ func move(local_delta : float, calculated_delta : float, input : NetworkInput):
 		if y_velocity <= grab_slide_speed:
 			y_velocity = grab_slide_speed
 			
-	velocity = Vector2(x_velocity, y_velocity) * calculated_delta
+	velocity = Vector2(x_velocity, y_velocity)
 	
 	move_and_slide()
 
@@ -126,7 +126,7 @@ func _process(_delta):
 	
 func _draw():
 	$CollisionShape2D.shape.draw(get_canvas_item(), Color(1, 1, 1, 0.25))
-	
+
 	draw_circle(get_local_mouse_position(), 20, Color(1, 0, 0, 0.25))
 	
 func _is_grabbing_wall() -> bool:

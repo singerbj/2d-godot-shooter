@@ -316,14 +316,14 @@ func _physics_process(delta):
 				for entity in interpolated_snapshot.state.values():
 					call("_on_update_local_entity", delta, entity)
 					
-#		# gather inputs and send them to the server
-#		var input : NetworkInput = call("_on_input_data_requested")
-#		input._set_required_data(_physics_process_tick, delta, server_snapshot_manager.get_server_time())
-#		client_input_manager.add_input(_local_peer_id, input)
-#		_report_input(input)
-#
-#		# client side predict
-#		call("_on_client_side_predict", delta, input)
+		# gather inputs and send them to the server
+		var input : NetworkInput = call("_on_input_data_requested")
+		input._set_required_data(_physics_process_tick, delta, server_snapshot_manager.get_server_time())
+		client_input_manager.add_input(_local_peer_id, input)
+		_report_input(input)
+
+		# client side predict
+		call("_on_client_side_predict", delta, input)
 		
 		if !_local_peer_is_server():
 			var entities : Dictionary = call("_on_request_entities")
@@ -343,15 +343,15 @@ func _physics_process(delta):
 func _process(delta):
 	_process_tick += 1
 	# Client processing
-	if _client_connected:
-		# gather inputs and send them to the server
-		var input : NetworkInput = call("_on_input_data_requested")
-		input._set_required_data(_physics_process_tick, delta, server_snapshot_manager.get_server_time())
-		client_input_manager.add_input(_local_peer_id, input)
-		_report_input(input)
-
-		# client side predict
-		call("_on_client_side_predict", delta, input)
+#	if _client_connected:
+#		# gather inputs and send them to the server
+#		var input : NetworkInput = call("_on_input_data_requested")
+#		input._set_required_data(_physics_process_tick, delta, server_snapshot_manager.get_server_time())
+#		client_input_manager.add_input(_local_peer_id, input)
+#		_report_input(input)
+#
+#		# client side predict
+#		call("_on_client_side_predict", delta, input)
 	
 	if self.has_method("_on_after_process"):
 		call("_on_after_process")
